@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+  <title>Serverless Chatroom with Sentiment Analysis using Google's Natural Language API and AWS</title>
+</head>
+<body>
+  <h3 class="text-center mt-2">Serverless Chatroom with Sentiment Analysis</h3>
+  <p class="text-center">More info here: <a href="https://coderecipe.ai/architectures/34142257" target="_blank">https://coderecipe.ai/architectures/34142257</a></p>
+  <div class="container col-md-8 col-12">
+    <div class="card">
+      <div class="card-body">
+        <div class="input-group mb-3">
+          <input type="text" class="form-control" id="message" placeholder="Write Message" aria-label="Write Message" aria-describedby="button-addon2">
+          <div class="input-group-append">
+            <button type="submit" class="btn btn-outline-secondary" type="button" id="sendMessage">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card mt-2">
+      <div class="card-body">
+        <h5>Messages:</h5>
+        <div id="messages-body"></div>
+      </div>
+    </div>
+  </div>
+  <!-- Optional JavaScript -->
+  <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+  <script>
+    var exampleSocket = new WebSocket("wss://3un0ne18l1.execute-api.us-east-1.amazonaws.com/sample");
+    $("#message").keyup(function(event){
+      if(event.keyCode === 13){
+        $("#sendMessage").click()
+      }
+    })
+    $("#sendMessage").click(function(){
+      console.log($("#message").val())
+      exampleSocket.send(JSON.stringify({action: "sendMessage",data: $("#message").val()}));
+    });
+    exampleSocket.addEventListener('message', function (event) {
+      console.log('Message from server ', JSON.parse(event.data));
+      var eventData = JSON.parse(event.data)
+      var sentimentData = JSON.parse(eventData["data"]["sentiment"])["documentSentiment"]
+      var sentimentMag = sentimentData["magnitude"]
+      var sentimentScore = sentimentData["score"]
+      $("#messages-body").prepend("<p>Message: "+eventData["data"]["message"]+"<br>Sentiment Magnitude: "+sentimentMag+", Sentiment Score: "+sentimentScore+"</p>")
+    });
+  </script>
+</body>
+</html>

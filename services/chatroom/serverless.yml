@@ -1,0 +1,97 @@
+##################################################################################
+# CodeRecipe - a marketplace for developers to grab ready to use cloud solutions #
+# More details at: https://coderecipe.ai/architectures/34142257                  #
+##################################################################################
+
+service: CodeRecipeSample-Chatroom
+provider:
+  name: aws
+  runtime: python2.7
+  region: us-east-1
+  stage: ${opt:stage}
+  environment:    
+    CONNECTIONS_TABLE: ${self:service}-${opt:CONNECTIONS_TABLE}
+  apiKeys:
+    - ${opt:stage}-chatroom
+  usagePlan:
+    quota:
+      limit: 5000
+      offset: 0
+      period: DAY
+    throttle:
+      burstLimit: 1
+      rateLimit: 1
+  iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - dynamodb:Query
+          - dynamodb:Scan
+          - dynamodb:GetItem
+          - dynamodb:PutItem
+          - dynamodb:UpdateItem
+          - dynamodb:DeleteItem
+        Resource: "arn:aws:dynamodb:${self:provider.region}:*:table/${self:provider.environment.CONNECTIONS_TABLE}"
+      - Effect: "Allow"
+        Action:
+          - lambda:InvokeFunction
+        Resource: "arn:aws:lambda:${self:provider.region}:#{AWS::AccountId}:function:${self:provider.stage}-AnalysisHandler"
+
+functions:
+  ConnectionOpenHandler:
+    handler: connection_open_handler.handle
+    name: ${self:provider.stage}-ConnectionHandler
+    environment:
+      Stage: ${self:provider.stage}
+    events:
+      - websocket:
+          route: $connect
+  MessageHandler:
+    handler: message_handler.handle
+    name: ${self:provider.stage}-MessageHandler
+    environment:
+      Stage: ${self:provider.stage}
+    events:
+      - websocket:
+          route: $default
+  ConnectionCloseHandler:
+    handler: connection_close_handler.handle
+    name: ${self:provider.stage}-DisconnectHandler
+    environment:
+      Stage: ${self:provider.stage}
+    events:
+      - websocket:
+          route: $disconnect
+  AnalysisHandler:
+    handler: analysis_handler.handle
+    name: ${self:provider.stage}-AnalysisHandler
+    environment:
+      Stage: ${self:provider.stage}
+      GCP_CLIENT_EMAIL_FROM_JSON: ${file(config.${self:provider.stage}.json):GCP_CLIENT_EMAIL_FROM_JSON}
+      GCP_PRIVATE_KEY_ID_FROM_JSON: ${file(config.${self:provider.stage}.json):GCP_PRIVATE_KEY_ID_FROM_JSON}
+      GCP_PRIVATE_KEY_FROM_JSON: ${file(config.${self:provider.stage}.json):GCP_PRIVATE_KEY_FROM_JSON}      
+
+resources:
+  Resources:
+    ConnectionsDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:provider.environment.CONNECTIONS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: connectionId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: connectionId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+
+plugins:
+  - serverless-python-requirements
+  - serverless-pseudo-parameters
+  - serverless-iam-roles-per-function
+
+custom:
+  pythonRequirements:
+    noDeploy: []
+    dockerizePip: true

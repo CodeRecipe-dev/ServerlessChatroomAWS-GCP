@@ -1,0 +1,7 @@
+boto3==1.9.88
+botocore==1.12.130
+google-cloud-language==1.2.0
+requests==2.21.0
+PyJWT==1.7.1
+cryptography==2.6.1
+html-sanitizer==1.7.1
