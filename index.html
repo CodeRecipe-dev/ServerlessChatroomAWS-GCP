@@ -37,23 +37,34 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   <script>
-    var exampleSocket = new WebSocket("wss://3un0ne18l1.execute-api.us-east-1.amazonaws.com/sample");
+    var exampleSocket = new WebSocket("wss://pdsecfk6bh.execute-api.us-east-1.amazonaws.com/samplev2");
     $("#message").keyup(function(event){
       if(event.keyCode === 13){
         $("#sendMessage").click()
       }
     })
     $("#sendMessage").click(function(){
-      console.log($("#message").val())
       exampleSocket.send(JSON.stringify({action: "sendMessage",data: $("#message").val()}));
     });
+    exampleSocket.addEventListener('open', function (event) {
+      exampleSocket.send(JSON.stringify({action: "sendMessage",getAllMessages: true}));
+    });
     exampleSocket.addEventListener('message', function (event) {
-      console.log('Message from server ', JSON.parse(event.data));
       var eventData = JSON.parse(event.data)
-      var sentimentData = JSON.parse(eventData["data"]["sentiment"])["documentSentiment"]
-      var sentimentMag = sentimentData["magnitude"]
-      var sentimentScore = sentimentData["score"]
-      $("#messages-body").prepend("<p>Message: "+eventData["data"]["message"]+"<br>Sentiment Magnitude: "+sentimentMag+", Sentiment Score: "+sentimentScore+"</p>")
+      if ("data" in eventData) {
+        var sentimentData = JSON.parse(eventData["data"]["sentiment"])["documentSentiment"]
+        var sentimentMag = sentimentData["magnitude"]
+        var sentimentScore = sentimentData["score"]
+        $("#messages-body").prepend("<p>Message: "+eventData["data"]["message"]+"<br>Sentiment Magnitude: "+sentimentMag+", Sentiment Score: "+sentimentScore+"</p>")
+      } else {
+        var allMessagesData = eventData
+        for(var i = 0; i < allMessagesData.length;i++){
+          var messageData = JSON.parse(allMessagesData[i]['message']);
+          var sentimentMag = JSON.parse(messageData["sentiment"])["documentSentiment"]["magnitude"]
+          var sentimentScore = JSON.parse(messageData["sentiment"])["documentSentiment"]["score"]
+          $("#messages-body").prepend("<p>Message: "+messageData["message"]+"<br>Sentiment Magnitude: "+sentimentMag+", Sentiment Score: "+sentimentScore+"</p>")
+        }
+      }
     });
   </script>
 </body>
