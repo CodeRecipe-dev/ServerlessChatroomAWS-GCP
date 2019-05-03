@@ -1,13 +1,15 @@
-## Background
+# Chatroom with Google's Sentiment Analysis using AWS Serverless 
+
 More info here: https://coderecipe.ai/architectures/34142257
 
-**Problem Statement:**
+**Problem Statment**
 
-Build a simple but scalable chat room like [gitter](https://gitter.im) with default sentiment analysis that detects negative sentences.
+Build a simple but scalable chat room like [gitter](https://gitter.im) with default sentiment analysis that detects negative sentences.  
+  
 
-**Solution:**
+**Solution** 
 
-Leverage API Gateway's Websocket API to send and receive messages in real time without hosting a dedicated server, and [Google’s Natural Language API](https://cloud.google.com/natural-language/) to analyze sentiment of messages.
+Leverage API Gateway's Websocket API to send and receive messages in real time without hosting a dedicated server, and [Google’s Natural Language API](https://cloud.google.com/natural-language/) to analyze sentiment of messages.  
 
 **Functional Requirements:**
 
@@ -25,12 +27,25 @@ Able to scale automatically without worry about setting up servers to maintain c
 
 Assuming each users do not get to see the messages sent before they join
 
-## prerequisites
-Run the following commands from the `services/chatroom` folder:
-
-npm install
-pip install -r requirements.txt
-
-## Deploy
+**Prerequisites**  
+```  
+npm install serverless  
+  
+export AWS_ACCESS_KEY_ID=<your-key-here>  
+  
+export AWS_SECRET_ACCESS_KEY=<your-secret-key-here>  
+``` 
 Fill in the `services/chatroom/config.<stage>.json` file with the correct google cloud credentials which can be obtained from [here](https://cloud.google.com/docs/authentication/getting-started).
-serverless deploy --stage <stage> --CONNECTIONS_TABLE <connections-table-name>
+
+**Deploy**  
+  
+
+```  
+serverless create --template-url https://github.com/CodeRecipe-dev/ServerlessChatroomAWS-GCP --path coderecipe-serverless-chatroom  
+  
+cd coderecipe-serverless-chatroom
+  
+npm install  
+  
+serverless deploy --stage sample --CONNECTIONS_TABLE coderecipe-connections 
+```  
